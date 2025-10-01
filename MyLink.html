@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개인 맞춤형 포털</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SortableJS (드래그앤드롭 라이브러리) 로드 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- 구글 폰트(Noto Sans KR) 로드 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        #toast { transition: transform 0.3s ease, opacity 0.3s ease; transform: translateY(100%); opacity: 0; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        
+        /* 다크모드 & 디자인 시스템 변수 */
+        :root { 
+            --bg-color: #F9FAFB; 
+            --text-color: #374151; 
+            --card-border: rgba(0, 0, 0, 0.07);
+            --header-color: #111827; 
+            --muted-text: #6b7280; 
+            --shadow-color: rgba(9, 30, 66, 0.15);
+            --shadow-hover-color: rgba(9, 30, 66, 0.25);
+            --card-bottom-bg: #FFFFFF;
+            --card-text-color: #111827;
+            --card-muted-text-color: #4b5563;
+
+            /* 웨이브 SVG 배경 (Light Mode) - 수정됨 */
+            --wave-gray: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23e5e7eb;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23e5e7eb;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-red: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23fecaca;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23fecaca;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-blue: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23bfdbfe;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23bfdbfe;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-green: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23a7f3d0;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23a7f3d0;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-yellow: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23fde68a;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23fde68a;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+        }
+        html.dark { 
+            --bg-color: #0A0A0A; 
+            --text-color: #d1d5db; 
+            --card-border: rgba(255, 255, 255, 0.1);
+            --header-color: #ffffff; 
+            --muted-text: #9ca3af;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --shadow-hover-color: rgba(0, 0, 0, 0.3);
+            --card-bottom-bg: #1F1F1F; /* 다크모드 카드 하단 배경 수정 */
+            --card-text-color: #F9FAFB;
+            --card-muted-text-color: #9ca3af;
+
+            /* 웨이브 SVG 배경 (Dark Mode) - 수정됨 */
+            --wave-gray-dark: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23374151;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%23374151;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-red-dark: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%237f1d1d;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%237f1d1d;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-blue-dark: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%231e3a8a;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%231e3a8a;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-green-dark: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%2314532d;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%2314532d;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+            --wave-yellow-dark: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 180'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%2378350f;stop-opacity:0.9' /%3e%3cstop offset='95%25' style='stop-color:%2378350f;stop-opacity:0' /%3e%3c/linearGradient%3e%3c/defs%3e%3cpath fill='url(%23grad)' d='M-5,0 H305 V110 C270,180 200,100 150,130 C100,160 40,110 -5,140 Z'/%3e%3c/svg%3e");
+        }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            transition: background-color 0.3s, color 0.3s; 
+        }
+        
+        /* 카드 스타일 (Wave SVG 배경) */
+        .link-card {
+            background-color: var(--card-bottom-bg);
+            border: 1px solid var(--card-border) !important;
+            box-shadow: 0 2px 8px -1px var(--shadow-color);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: 100% auto;
+        }
+        .link-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px -4px var(--shadow-hover-color);
+        }
+        
+        /* 웨이브 그라데이션 클래스 */
+        .gradient-gray { background-image: var(--wave-gray); }
+        .gradient-red { background-image: var(--wave-red); }
+        .gradient-blue { background-image: var(--wave-blue); }
+        .gradient-green { background-image: var(--wave-green); }
+        .gradient-yellow { background-image: var(--wave-yellow); }
+        
+        html.dark .gradient-gray { background-image: var(--wave-gray-dark); }
+        html.dark .gradient-red { background-image: var(--wave-red-dark); }
+        html.dark .gradient-blue { background-image: var(--wave-blue-dark); }
+        html.dark .gradient-green { background-image: var(--wave-green-dark); }
+        html.dark .gradient-yellow { background-image: var(--wave-yellow-dark); }
+        
+        /* 카드 내부 텍스트 색상 고정 (가독성을 위해) */
+        .link-card h3 { color: var(--card-text-color) !important; }
+        .link-card p { color: var(--card-muted-text-color) !important; }
+
+        /* 아이콘 */
+        .fallback-icon { 
+            display: flex; align-items: center; justify-content: center; font-weight: bold; 
+            font-size: 1.5rem; border-radius: 0.75rem; width: 48px; height: 48px; 
+        }
+        .icon-container img { border-radius: 0.75rem; }
+
+        /* 타이포그래피 */
+        #mainTitle { font-weight: 900; }
+
+        /* 컨트롤 UI (버튼, 검색창, 필터) - Glassmorphism 유지 */
+        #searchInput, #addLinkBtn, #darkModeToggle, #modalDialog {
+            background-color: rgba(var(--card-bg-rgb, 255, 255, 255), 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 1px 2px 0 var(--shadow-color);
+            border-width: 1px;
+            border-color: var(--card-border) !important;
+        }
+        html.dark #searchInput, html.dark #addLinkBtn, html.dark #darkModeToggle, html.dark #modalDialog {
+             background-color: rgba(var(--card-bg-rgb, 24, 24, 27), 0.6);
+        }
+        #searchInput, #addLinkBtn, #darkModeToggle { border-radius: 9999px; }
+        #modalDialog { border-radius: 1rem; }
+        #searchInput:focus { outline: 2px solid #4f46e5; outline-offset: 2px; }
+
+        .filter-btn { transition: transform 0.2s, box-shadow 0.2s; }
+        .filter-btn.active { transform: scale(1.15); box-shadow: 0 0 0 3px #4f46e5; }
+        
+        /* 드래그 & 커서 */
+        .sortable-ghost { opacity: 0.4; background: #c8ebfb; }
+        .sortable-drag { opacity: 1 !important; }
+        .grab-cursor { cursor: grab; }
+        .grab-cursor:active { cursor: grabbing; }
+
+    </style>
+</head>
+<body class="transition-colors duration-300">
+
+    <div class="container mx-auto px-6 py-12">
+        
+        <header class="text-center mb-12">
+            <h1 id="mainTitle" class="text-4xl md:text-5xl font-black text-[--header-color] mb-3 cursor-pointer">My Links Portal</h1>
+            <p id="subTitle" class="text-lg text-[--muted-text] cursor-pointer">나만의 맞춤형 링크 포털</p>
+        </header>
+
+        <!-- 기능 바 -->
+        <div class="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div class="relative w-full sm:max-w-xs">
+                <input type="text" id="searchInput" placeholder="링크 검색..." class="w-full pl-10 pr-4 py-2 transition-colors">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[--muted-text]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="addLinkBtn" class="p-2.5">
+                    <svg class="h-6 w-6 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                </button>
+                <button id="darkModeToggle" class="p-2.5">
+                    <!-- 아이콘은 JS로 추가 -->
+                </button>
+            </div>
+        </div>
+        
+        <!-- 컬러 필터 바 -->
+        <div id="filterContainer" class="mb-12 flex justify-center items-center gap-4">
+            <!-- 필터 버튼은 JS로 추가 -->
+        </div>
+
+        <main id="linkContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+            <!-- 링크 카드는 JS로 렌더링 -->
+        </main>
+    </div>
+
+    <!-- 수정/추가 모달 -->
+    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div id="modalDialog" class="p-6 w-full max-w-md mx-4">
+            <h2 id="modalTitle" class="text-xl font-bold mb-6 text-[--header-color]">링크 수정</h2>
+            <div class="space-y-4">
+                <input type="url" id="urlInput" class="w-full px-3 py-2 border rounded-md" style="background-color: var(--bg-color); border-color: var(--card-border);" placeholder="URL 주소">
+                <input type="text" id="titleInput" class="w-full px-3 py-2 border rounded-md" style="background-color: var(--bg-color); border-color: var(--card-border);" placeholder="제목">
+                <input type="text" id="descriptionInput" class="w-full px-3 py-2 border rounded-md" style="background-color: var(--bg-color); border-color: var(--card-border);" placeholder="설명">
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-[--muted-text]">분류 색상</label>
+                    <div id="colorPicker" class="flex space-x-2">
+                        <!-- 컬러 픽커는 JS로 추가 -->
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-between items-center">
+                 <button id="deleteButton" class="px-4 py-2 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition-colors">삭제</button>
+                <div class="flex space-x-3">
+                    <button id="cancelButton" class="px-4 py-2 rounded-md hover:opacity-80" style="background-color: var(--card-border);">취소</button>
+                    <button id="saveButton" class="px-4 py-2 text-white bg-indigo-500 rounded-md hover:bg-indigo-600 w-20 h-10 flex items-center justify-center">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 right-10 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const mainTitleEl = document.getElementById('mainTitle');
+        const subTitleEl = document.getElementById('subTitle');
+        const linkContainer = document.getElementById('linkContainer');
+        const searchInput = document.getElementById('searchInput');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const addLinkBtn = document.getElementById('addLinkBtn');
+        const filterContainer = document.getElementById('filterContainer');
+        const modal = document.getElementById('editModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const urlInput = document.getElementById('urlInput');
+        const titleInput = document.getElementById('titleInput');
+        const descriptionInput = document.getElementById('descriptionInput');
+        const colorPicker = document.getElementById('colorPicker');
+        const saveButton = document.getElementById('saveButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const deleteButton = document.getElementById('deleteButton');
+        const toast = document.getElementById('toast');
+
+        let currentEditingId = null;
+        let selectedColor = 'gray';
+        let activeFilters = [];
+        
+        let savedCategoryNames = JSON.parse(localStorage.getItem('portalCategoryNames')) || {};
+        const COLORS = {
+            gray: { bg: 'bg-black', name: savedCategoryNames.gray || '기본' },
+            red: { bg: 'bg-red-500', name: savedCategoryNames.red || '중요' },
+            blue: { bg: 'bg-blue-500', name: savedCategoryNames.blue || '업무' },
+            green: { bg: 'bg-green-500', name: savedCategoryNames.green || '학습' },
+            yellow: { bg: 'bg-yellow-500', name: savedCategoryNames.yellow || '개인' },
+        };
+
+        const initialData = [
+            { id: 'google-' + Date.now(), url: 'https://www.google.com', title: 'Google', description: '검색 엔진', category: '검색', tagColor: 'blue' },
+            { id: 'youtube-' + Date.now(), url: 'https://www.youtube.com', title: 'YouTube', description: '동영상 플랫폼', category: '미디어', tagColor: 'red' },
+            { id: 'github-' + Date.now(), url: 'https://www.github.com', title: 'GitHub', description: '코드 호스팅', category: '개발', tagColor: 'gray' },
+        ];
+
+        let linksData = JSON.parse(localStorage.getItem('linksPortalData')) || initialData;
+        const savedMainTitle = localStorage.getItem('portalMainTitle');
+        if (savedMainTitle) mainTitleEl.textContent = savedMainTitle;
+        const savedSubTitle = localStorage.getItem('portalSubTitle');
+        if (savedSubTitle) subTitleEl.textContent = savedSubTitle;
+
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.style.backgroundColor = isError ? '#EF4444' : '#374151';
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+        
+        function saveData() {
+            localStorage.setItem('linksPortalData', JSON.stringify(linksData));
+        }
+
+        function saveCategoryNames() {
+            const namesToSave = {};
+            for (const color in COLORS) {
+                namesToSave[color] = COLORS[color].name;
+            }
+            localStorage.setItem('portalCategoryNames', JSON.stringify(namesToSave));
+        }
+
+        function makeEditable(element, storageKey) {
+            element.addEventListener('dblclick', () => {
+                element.contentEditable = 'true';
+                element.focus();
+                element.classList.add('ring-2', 'ring-indigo-500', 'rounded-md', 'p-1');
+            });
+            element.addEventListener('blur', () => {
+                element.contentEditable = 'false';
+                element.classList.remove('ring-2', 'ring-indigo-500', 'rounded-md', 'p-1');
+                localStorage.setItem(storageKey, element.textContent.trim());
+                showToast('제목이 저장되었습니다.');
+            });
+            element.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); element.blur(); } });
+        }
+
+        function showModal(linkId = null) {
+            currentEditingId = linkId;
+            if (linkId) {
+                modalTitle.textContent = '링크 수정';
+                deleteButton.style.display = 'block';
+                const link = linksData.find(l => l.id === linkId);
+                urlInput.value = link.url;
+                titleInput.value = link.title;
+                descriptionInput.value = link.description || '';
+                selectedColor = link.tagColor || 'gray';
+            } else {
+                modalTitle.textContent = '새 링크 추가';
+                deleteButton.style.display = 'none';
+                [urlInput, titleInput, descriptionInput].forEach(i => i.value = '');
+                selectedColor = 'gray';
+            }
+            updateColorPickerUI();
+            modal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            currentEditingId = null;
+        }
+
+        function updateColorPickerUI() {
+            colorPicker.querySelectorAll('div').forEach(div => {
+                div.style.outline = div.dataset.color === selectedColor ? '2px solid #4f46e5' : 'none';
+                div.style.outlineOffset = '2px';
+            });
+        }
+        
+        async function saveLink() {
+            const newUrl = urlInput.value.trim();
+            if (!newUrl) return showToast('URL을 입력해주세요.', true);
+
+            let linkData = {
+                id: currentEditingId || 'link-' + Date.now(),
+                url: newUrl,
+                title: titleInput.value.trim(),
+                description: descriptionInput.value.trim(),
+                tagColor: selectedColor,
+            };
+
+            const isUrlChanged = currentEditingId ? linksData.find(l => l.id === currentEditingId).url !== newUrl : true;
+
+            if (isUrlChanged) {
+                saveButton.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                saveButton.disabled = true;
+
+                try {
+                    const res = await fetch(`https://meta-grabber.vercel.app/api?url=${encodeURIComponent(newUrl)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        linkData.title = data.title || new URL(newUrl).hostname;
+                        linkData.description = data.description || '';
+                    } else throw new Error();
+                } catch (error) {
+                    showToast('정보 로딩 실패. 기본 정보로 저장됩니다.', true);
+                    linkData.title = linkData.title || new URL(newUrl).hostname;
+                } finally {
+                    saveButton.innerHTML = '저장';
+                    saveButton.disabled = false;
+                }
+            }
+            
+            if (currentEditingId) {
+                const linkIndex = linksData.findIndex(l => l.id === currentEditingId);
+                linksData[linkIndex] = linkData;
+            } else {
+                linksData.push(linkData);
+            }
+            
+            saveData();
+            render();
+            hideModal();
+            showToast('링크가 저장되었습니다.');
+        }
+
+        function deleteLink() {
+            if (currentEditingId && confirm('정말로 이 링크를 삭제하시겠습니까?')) {
+                linksData = linksData.filter(l => l.id !== currentEditingId);
+                saveData();
+                render();
+                hideModal();
+                showToast('링크가 삭제되었습니다.');
+            }
+        }
+
+        const sunIcon = `<svg class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`;
+        const moonIcon = `<svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`;
+        const applyDarkMode = (isDark) => {
+            localStorage.setItem('darkMode', isDark);
+            document.documentElement.classList.toggle('dark', isDark);
+            darkModeToggle.innerHTML = isDark ? sunIcon : moonIcon;
+        };
+
+        function createCardElement(link) {
+            const card = document.createElement('div');
+            card.dataset.id = link.id;
+            card.className = `link-card relative group flex flex-col items-center justify-center p-6 grab-cursor gradient-${link.tagColor}`;
+            
+            const title = link.title || new URL(link.url).hostname;
+            const icon = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(link.url).hostname}`;
+            const fallbackChar = (title.charAt(0) || 'L').toUpperCase();
+
+            card.innerHTML = `
+                <button class="edit-btn absolute top-3 right-3 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <svg class="h-5 w-5 text-gray-500/70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                </button>
+                <div class="w-16 h-16 mb-4 flex items-center justify-center icon-container">
+                    <img src="${icon}" alt="${title} Icon" class="h-12 w-12" onerror="this.parentElement.innerHTML = \`<div class='fallback-icon' style='background-color: var(--card-border); color: var(--muted-text);'>${fallbackChar}</div>\`">
+                </div>
+                <h3 data-title class="text-lg font-bold text-center break-all">${title}</h3>
+                <p data-description class="text-sm mt-1 text-center">${link.description || ''}</p>
+            `;
+            card.addEventListener('click', (e) => { if (!e.target.closest('.edit-btn')) window.open(link.url, '_blank', 'noopener,noreferrer'); });
+            card.querySelector('.edit-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); showModal(link.id); });
+            return card;
+        }
+
+        const render = () => {
+            linkContainer.innerHTML = '';
+            const linksToRender = activeFilters.length > 0 
+                ? linksData.filter(link => activeFilters.includes(link.tagColor))
+                : linksData;
+
+            linksToRender.forEach(link => linkContainer.appendChild(createCardElement(link)));
+        };
+
+        const initFilters = () => {
+            filterContainer.innerHTML = `<button data-color="all" class="filter-btn active px-4 py-1.5 text-sm rounded-full bg-indigo-500 text-white">전체</button>`;
+            Object.entries(COLORS).forEach(([color, { bg, name }]) => {
+                const btn = document.createElement('button');
+                btn.dataset.color = color;
+                btn.className = `filter-btn flex items-center gap-2 px-3 py-1.5 text-sm rounded-full`;
+                btn.innerHTML = `<div class="w-4 h-4 rounded-full ${bg}"></div><span class="category-name cursor-text">${name}</span>`;
+                filterContainer.appendChild(btn);
+
+                const nameSpan = btn.querySelector('.category-name');
+                nameSpan.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    nameSpan.contentEditable = 'true';
+                    nameSpan.focus();
+                    nameSpan.classList.add('ring-2', 'ring-indigo-500', 'rounded-md', 'p-1', 'bg-[--card-bottom-bg]');
+                });
+
+                nameSpan.addEventListener('blur', () => {
+                    nameSpan.contentEditable = 'false';
+                    nameSpan.classList.remove('ring-2', 'ring-indigo-500', 'rounded-md', 'p-1', 'bg-[--card-bottom-bg]');
+                    const newName = nameSpan.textContent.trim();
+                    if (newName && newName !== COLORS[color].name) {
+                        COLORS[color].name = newName;
+                        saveCategoryNames();
+                        showToast('카테고리 이름이 저장되었습니다.');
+                    } else {
+                        nameSpan.textContent = COLORS[color].name;
+                    }
+                });
+
+                nameSpan.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        nameSpan.blur();
+                    }
+                });
+            });
+
+            filterContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.filter-btn');
+                if (!btn) return;
+                
+                // 이름 수정 중일 때는 필터링 동작 방지
+                if (document.activeElement.classList.contains('category-name') && document.activeElement.isContentEditable) return;
+
+
+                const color = btn.dataset.color;
+                if (color === 'all') {
+                    activeFilters = [];
+                } else {
+                    const index = activeFilters.indexOf(color);
+                    if (index > -1) activeFilters.splice(index, 1);
+                    else activeFilters.push(color);
+                }
+                
+                filterContainer.querySelectorAll('.filter-btn').forEach(b => {
+                    const c = b.dataset.color;
+                    b.classList.toggle('active', (activeFilters.length === 0 && c === 'all') || activeFilters.includes(c));
+                });
+                if (activeFilters.length > 0) {
+                    filterContainer.querySelector('[data-color="all"]').classList.remove('active');
+                }
+
+                render();
+            });
+        };
+
+        const initColorPicker = () => {
+            colorPicker.innerHTML = '';
+            Object.entries(COLORS).forEach(([color, { bg }]) => {
+                const div = document.createElement('div');
+                div.className = `w-6 h-6 rounded-full cursor-pointer ${bg}`;
+                div.dataset.color = color;
+                div.addEventListener('click', () => { selectedColor = color; updateColorPickerUI(); });
+                colorPicker.appendChild(div);
+            });
+        };
+        
+        // --- Init & Event Listeners ---
+        darkModeToggle.addEventListener('click', () => applyDarkMode(!document.documentElement.classList.contains('dark')));
+        addLinkBtn.addEventListener('click', () => showModal());
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const visibleCards = linkContainer.querySelectorAll('.link-card');
+            visibleCards.forEach(card => {
+                const title = card.querySelector('[data-title]').textContent.toLowerCase();
+                const description = card.querySelector('[data-description]').textContent.toLowerCase();
+                card.style.display = title.includes(term) || description.includes(term) ? 'flex' : 'none';
+            });
+        });
+
+        cancelButton.addEventListener('click', hideModal);
+        saveButton.addEventListener('click', saveLink);
+        deleteButton.addEventListener('click', deleteLink);
+        modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
+
+        makeEditable(mainTitleEl, 'portalMainTitle');
+        makeEditable(subTitleEl, 'portalSubTitle');
+
+        applyDarkMode(localStorage.getItem('darkMode') === 'true');
+        initColorPicker();
+        initFilters();
+        render();
+
+        new Sortable(linkContainer, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: () => {
+                const newOrderIds = Array.from(linkContainer.children).map(c => c.dataset.id);
+                linksData.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
+                saveData();
+                showToast('순서가 저장되었습니다.');
+            },
+        });
+    });
+    </script>
+</body>
+</html>
+
